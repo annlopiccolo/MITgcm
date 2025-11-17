@@ -9,4 +9,3 @@ MIT General Circulation Model master code and documentation. The main MITgcm web
 ## Documentation
 
 Access the latest documentation [here](http://mitgcm.readthedocs.io/en/latest/)
-
