@@ -1,0 +1,14 @@
+ nDims = [   3 ];
+ dimList = [
+     1,    1,    1,
+  1000,  601,  650,
+   100,    1,  100
+ ];
+ dataprec = [ 'float64' ];
+ nrecords = [          5 ];
+ timeStepNumber = [       7201 ];
+ timeInterval = [  4.320600000000E+05 ];
+ nFlds = [    5 ];
+ fldList = {
+ 'pTr01   ' 'pTr02   ' 'pTr03   ' 'pTr04   ' 'pTr05   '
+ };

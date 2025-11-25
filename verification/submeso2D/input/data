@@ -1,0 +1,79 @@
+# ====================
+# | Model parameters |
+# ====================
+#
+# Continuous equation parameters
+ &PARM01
+ tRef=100*30.,
+ viscAr=2.E-4,
+# viscA4=12.E5,
+ viscC2smag=3,
+ no_slip_sides=.FALSE.,
+ no_slip_bottom=.TRUE.,
+ bottomDragLinear=1.E-3,
+# bottomDragQuadratic=1.E-3,
+ diffKrT=0.E-5,
+ diffKrS=0.E-5,
+# diffKrNrT=10*1.E-2, 30*2.E-5,
+# diffKrNrS=10*1.E-2, 30*2.E-5,
+ diffKhT=0.E3,
+ diffKhS=0.E3,
+ beta=0.E-11,
+ f0  =1.E-4,
+ gravity=9.81,
+ eosType='LINEAR',
+ tAlpha=2.E-4,
+ sBeta =0.E-4,
+ rhoConst=1000.,
+ rhoNil=1000.,
+ rigidLid=.FALSE.,
+ implicitFreeSurface=.TRUE.,
+ implicitDiffusion=.TRUE.,
+ tempAdvScheme=33,
+ saltAdvScheme=33,
+ staggerTimeStep=.TRUE.,
+# hMixCriteria=-0.1,
+ hMixCriteria=2.0,
+ readBinaryPrec=64,
+ writeBinaryPrec=64,
+ &
+
+# Elliptic solver parameters
+ &PARM02
+ cg2dMaxIters=1000,
+ cg2dTargetResidual=1.E-13,
+ &
+
+# Time stepping parameters
+ &PARM03
+ startTime=0.,
+ nTimeSteps=7201,
+# nTimeSteps=14401,
+ deltaT=60.,
+ cAdjFreq=-1.,
+ abEps=0.1,
+ pChkptFreq=1296000.,
+ chkptFreq =1296000.,
+ dumpFreq=8640000.,
+# dumpFreq=1.,
+ monitorFreq=8640000.,
+ monitorSelect=2,
+# monitorFreq=1.,
+ writePickupAtEnd=.true.,
+ &
+
+# Gridding parameters
+ &PARM04
+ usingCartesianGrid=.TRUE.,
+ delR=100*4.,
+ delX=1*100.,
+ delY=1000*100.,
+ &
+
+# Input datasets
+ &PARM05
+ hydrogThetaFile='t_ini.bin',
+ checkIniSalt=.false.,
+ uVelInitFile   ='u_ini.bin',
+ bathyFile      ='topog.bin',
+ &

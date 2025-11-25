@@ -1,0 +1,9 @@
+## SLURM PROLOG ###############################################################
+##    Job ID : 14505983
+##  Job Name : submeso
+##  Nodelist : node1951
+##      CPUs : 20
+##   Mem/CPU : 4096 MB
+## Directory : /oscar/data/deeps/private/bfoxkemp/alopicco/MITgcm_param/verification/submeso2D/run_MLAdjust
+##   Job Started : Tue Nov 25 02:36:36 PM EST 2025
+###############################################################################

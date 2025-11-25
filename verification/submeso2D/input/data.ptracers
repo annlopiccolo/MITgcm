@@ -1,0 +1,23 @@
+# Tracers are initialized at time 0
+# generated with matlab using gendata.m
+#
+ &PTRACERS_PARM01
+ PTRACERS_numInUse=5,
+ PTRACERS_advScheme=33,
+ PTRACERS_diffKh=0.,
+ PTRACERS_diffK4=0.E9,
+ PTRACERS_diffKr=0.,
+ PTRACERS_Iter0=0,
+ PTRACERS_monitorFreq=8640000.,
+ PTRACERS_dumpFreq=7200.,
+ PTRACERS_initialFile(1)='pt24.bin',
+ PTRACERS_names(1)='pt24',
+ PTRACERS_initialFile(2)='pt25.bin',
+ PTRACERS_names(2)='pt25',
+ PTRACERS_initialFile(3)='pt34.bin',
+ PTRACERS_names(3)='pt34',
+ PTRACERS_initialFile(4)='pt35.bin',
+ PTRACERS_names(4)='pt35',
+ PTRACERS_initialFile(5)='pt37.bin',
+ PTRACERS_names(5)='pt37',
+ &

@@ -1,0 +1,90 @@
+Get compiler version using: mpif77 --version
+/oscar/runtime/software/hpcx-mpi/4.1.5rc2/hpcx-ompi/bin/mpif77
+GNU Fortran (GCC) 11.3.1 20221121 (Red Hat 11.3.1-4)
+Copyright (C) 2021 Free Software Foundation, Inc.
+This is free software; see the source for copying conditions.  There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+<-- compiler version ----
+
+running: check_fortran_compiler
+ mpif77 -fallow-argument-mismatch -fconvert=big-endian -fimplicit-none -mcmodel=medium -O3 -funroll-loops -c genmake_tcomp.f
+ mpif77 -fallow-argument-mismatch -fconvert=big-endian -fimplicit-none -mcmodel=medium -O3 -funroll-loops -o genmake_tcomp genmake_tcomp.o -L/oscar/rt/9.2/software/0.20-generic/0.20.1/opt/spack/linux-rhel9-x86_64_v3/gcc-11.3.1/netcdf-fortran-4.6.0-ciymq6fnwgq2bpag6xpbunpwe4mctu45/lib -lnetcdff -lnetcdf -lnetcdf -lm
+ mpirun -np 1 ./genmake_tcomp
+ hello world :            1
+ hello world :            2
+ hello world :            3
+ --> set FC_CHECK= 5 /5
+
+running: look_for_makedepend()
+ --> set MAKEDEPEND=$(TOOLSDIR)/xmakedepend
+
+running: check_HAVE_CLOC()
+ running: get_fortran_c_namemangling()
+ mpicc -O0 -mcmodel=medium -c genmake_test.c
+genmake_test.c: In function ‘tcall’:
+genmake_test.c:1:31: warning: implicit declaration of function ‘tsub’ [-Wimplicit-function-declaration]
+    1 | void tcall( char * string ) { tsub( string ); }
+      |                               ^~~~
+ mpif77 -fallow-argument-mismatch -fconvert=big-endian -fimplicit-none -mcmodel=medium -c genmake_tcomp.f
+ --> set FC_NAMEMANGLE='#define FC_NAMEMANGLE(X)  X ## _'
+mpicc -O0 -mcmodel=medium -c genmake_tc_1.c
+mpif77 -fallow-argument-mismatch -fconvert=big-endian -fimplicit-none -mcmodel=medium -o genmake_tc genmake_tc_2.f genmake_tc_1.o
+  HELLO WORLD   1763419081.8117421     
+ --> set HAVE_CLOC='t'
+
+running: check_HAVE_SETRLSTK()
+mpicc -O0 -mcmodel=medium -c genmake_tc_1.c
+      program hello
+      external setrlstk
+      call setrlstk()
+      end
+mpif77 -fallow-argument-mismatch -fconvert=big-endian -fimplicit-none -mcmodel=medium -o genmake_tc genmake_tc_2.f genmake_tc_1.o
+ --> set HAVE_SETRLSTK='t'
+
+running: check_HAVE_SIGREG()
+mpicc -O0 -mcmodel=medium -c genmake_tc_1.c
+genmake_tc_1.c:11:44: warning: ‘struct ucontext’ declared inside parameter list will not be visible outside of this definition or declaration
+   11 |     unsigned int sn, siginfo_t  si, struct ucontext *sc )
+      |                                            ^~~~~~~~
+      program hello
+      integer anint
+      common /iv/ anint
+      external sigreg
+      call sigreg(anint)
+      end
+mpif77 -fallow-argument-mismatch -fconvert=big-endian -fimplicit-none -mcmodel=medium -o genmake_tc genmake_tc_2.f genmake_tc_1.o
+ --> set HAVE_SIGREG='t'
+
+running: check_HAVE_STAT()
+mpicc -O0 -mcmodel=medium -c genmake_tc_1.c
+      program hello
+      integer nbyte
+      call tfsize(nbyte)
+      print *," HELLO WORLD", nbyte
+      end
+mpif77 -fallow-argument-mismatch -fconvert=big-endian -fimplicit-none -mcmodel=medium -o genmake_tc genmake_tc_2.f genmake_tc_1.o
+ --> set HAVE_STAT='t'
+
+running: check_netcdf_libs()
+===  genmake_tnc.F  >>>
+      program fgennc
+#include "netcdf.inc"
+      integer iret, ncid, xid
+      iret = nf_create('genmake_tnc.nc', NF_CLOBBER, ncid)
+      IF (iret .NE. NF_NOERR) write(*,*) NF_STRERROR(iret)
+      iret = nf_def_dim(ncid, 'X', 11, xid)
+      IF (iret .NE. NF_NOERR) write(*,*) NF_STRERROR(iret)
+      iret = nf_close(ncid)
+      IF (iret .NE. NF_NOERR) write(*,*) NF_STRERROR(iret)
+      end
+<<<  genmake_tnc.F  ===
+cat genmake_tnc.F |  cpp -traditional -P -DWORDLENGTH=4 -DNML_TERMINATOR -DALLOW_USE_MPI -DHAVE_SYSTEM -DHAVE_FDATE -DHAVE_ETIME_SBR -DHAVE_CLOC -DHAVE_SETRLSTK -DHAVE_SIGREG -DHAVE_STAT -I/oscar/rt/9.2/software/0.20-generic/0.20.1/opt/spack/linux-rhel9-x86_64_v3/gcc-11.3.1/netcdf-fortran-4.6.0-ciymq6fnwgq2bpag6xpbunpwe4mctu45/include -I/oscar/runtime/software/hpcx-mpi/4.1.5rc2/hpcx-ompi//include
+mpif77  -fallow-argument-mismatch -fconvert=big-endian -fimplicit-none -mcmodel=medium -O3 -funroll-loops -c genmake_tnc.f  \ 
+  &&  mpif77  -fallow-argument-mismatch -fconvert=big-endian -fimplicit-none -mcmodel=medium -O3 -funroll-loops -o genmake_tnc genmake_tnc.o -L/oscar/rt/9.2/software/0.20-generic/0.20.1/opt/spack/linux-rhel9-x86_64_v3/gcc-11.3.1/netcdf-fortran-4.6.0-ciymq6fnwgq2bpag6xpbunpwe4mctu45/lib -lnetcdff -lnetcdf -lnetcdf -lm
+check_netcdf: successful
+ --> set HAVE_NETCDF='t'
+
+running: check_HAVE_FLUSH()
+  check_HAVE_FLUSH: successful
+ --> set HAVE_FLUSH='t'
