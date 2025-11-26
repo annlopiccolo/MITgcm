@@ -16,6 +16,8 @@ C     | o Calculate stream-functions for Sub-Meso bolus velocity
 C     *==========================================================*
 C     | Ref: B. Fox-Kemper etal, Oce.Model., 39:61-78, 2011
 C     |      B. Fox-Kemper etal, JPO, 38(6):1145-1165, 2008
+C     | Adapted by Anna Lo Piccolo, Nov 2025 to include EntDepth
+C     | for entrainment
 C     *==========================================================*
 C     \ev
 
