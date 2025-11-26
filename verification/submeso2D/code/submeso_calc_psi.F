@@ -54,12 +54,19 @@ C     == Local variables ==
       _RL lengthScaleF(1-OLx:sNx+OLx,1-OLy:sNy+OLy)
       _RL fcorLoc     (1-OLx:sNx+OLx,1-OLy:sNy+OLy)
       _RL PsiLoc      (1-OLx:sNx+OLx,1-OLy:sNy+OLy)
+      _RL heLocU      (1-OLx:sNx+OLx,1-OLy:sNy+OLy)
+      _RL heLocV      (1-OLx:sNx+OLx,1-OLy:sNy+OLy)
       _RL dzLoc
 #ifdef GM_BOLUS_ADVEC
-      _RL z2H, mu_z
+      _RL z2H, z_rel, le, Ccoef, n_val, mu_z
 #endif
-      _RL five_ov21
-      PARAMETER( five_ov21 = 5. _d 0 / 21. _d 0 )
+C      _RL five_ov21
+C      PARAMETER( five_ov21 = 5. _d 0 / 21. _d 0 )
+      _RL meConst
+      _RL heSlope, heIntercept
+      PARAMETER( meConst = 0.12d0 )
+      PARAMETER( heSlope = 1.7d0 )
+      PARAMETER( heIntercept = -79.2d0 ) 
 
 C--   parameter to move to GMREDI.h
 c     _RL subMeso_invTau, subMeso_LfMin, subMeso_Ceff
@@ -160,15 +167,35 @@ C     &                 *2. _d 0/(lengthScaleF(i-1,j)+lengthScaleF(i,j))
        DO k=2,Nr
         DO j=2-OLy,sNy+OLy-1
          DO i=3-OLx,sNx+OLx-1
+          
           IF ( mixLayerU(i,j).GT.0. _d 0 ) THEN
             z2H = 2. _d 0*rF(k)/mixLayerU(i,j)
           ELSE
             z2H = 0. _d 0
           ENDIF
-          mu_z = ( z2H + 1. _d 0 )*( z2H + 1. _d 0 )
-          mu_z = ( 1. _d 0 - mu_z )*(1. _d 0 + mu_z*five_ov21 )
-          mu_z = MAX( 0. _d 0, mu_z )
-          GM_PsiX(i,j,k,bi,bj) = GM_PsiX(i,j,k,bi,bj)
+          
+          heLocU(i,j) = heSlope*mixLayerU(i,j) + heIntercept
+          heLocU(i,j) = MAX( heLocU(i,j), mixLayerU(i,j) )          
+          
+          le = heLocU(i,j) - mixLayerU(i,j)
+          IF ( le .LE. 0._d0 ) THEN
+           Ccoef = 0._d0
+           n_val = 0._d0
+          ELSE
+           Ccoef = EXP(1._d0)*meConst/le
+           n_val = Ccoef*mixLayerU(i,j)/4._d0 - 1._d0
+          END IF          
+
+    	  IF ( rF(k) .GE. -mixLayerU(i,j) ) THEN
+           mu_z = ( z2H + 1._d0 )*( z2H + 1._d0 )
+           mu_z = ( 1._d0 - mu_z )*( 1._d0 + mu_z*n_val )
+           mu_z = MAX( 0._d0, mu_z )
+    	  ELSE
+           z_rel = rF(k) + mixLayerU(i,j)
+	   mu_z = Ccoef*z_rel*EXP( z_rel/le )
+    	  ENDIF
+    
+	  GM_PsiX(i,j,k,bi,bj) = GM_PsiX(i,j,k,bi,bj)
      &                         + mu_z*PsiLoc(i,j)
          ENDDO
         ENDDO
@@ -202,20 +229,41 @@ C     &                 *2. _d 0/(lengthScaleF(i,j-1)+lengthScaleF(i,j))
 #ifdef GM_BOLUS_ADVEC
        DO k=2,Nr
         DO j=3-OLy,sNy+OLy-1
-         DO i=2-OLx,sNx+OLx-1
-          IF ( mixLayerV(i,j).GT.0. _d 0 ) THEN
-            z2H = 2. _d 0*rF(k)/mixLayerV(i,j)
+         DO i=2-OLx,sNx+OLx-1        
+
+          IF ( mixLayerV(i,j).GT.0._d0 ) THEN
+            z2H = 2._d0*rF(k)/mixLayerV(i,j)
           ELSE
-            z2H = 0. _d 0
+            z2H = 0._d0
           ENDIF
-          mu_z = ( z2H + 1. _d 0 )*( z2H + 1. _d 0 )
-          mu_z = ( 1. _d 0 - mu_z )*(1. _d 0 + mu_z*five_ov21 )
-          mu_z = MAX( 0. _d 0, mu_z )
+
+          heLocV(i,j) = heSlope*mixLayerV(i,j) + heIntercept
+          heLocV(i,j) = MAX( heLocV(i,j), mixLayerV(i,j) )
+
+          le = heLocV(i,j) - mixLayerV(i,j)
+          IF ( le .LE. 0._d0 ) THEN
+           Ccoef = 0._d0
+           n_val = 0._d0
+          ELSE
+           Ccoef = EXP(1._d0)*meConst/le
+           n_val = Ccoef*mixLayerV(i,j)/4._d0 - 1._d0
+          END IF
+
+          IF ( rF(k) .GE. -mixLayerV(i,j) ) THEN
+           mu_z = ( z2H + 1._d0 )*( z2H + 1._d0 )
+           mu_z = ( 1._d0 - mu_z )*( 1._d0 + mu_z*n_val )
+           mu_z = MAX( 0._d0, mu_z )
+          ELSE
+           z_rel = rF(k) + mixLayerV(i,j)
+           mu_z = Ccoef*z_rel*EXP( z_rel/le )
+          ENDIF
+
           GM_PsiY(i,j,k,bi,bj) = GM_PsiY(i,j,k,bi,bj)
      &                         + mu_z*PsiLoc(i,j)
+
          ENDDO
         ENDDO
-       ENDDO
+       ENDDO       
 #endif /* GM_BOLUS_ADVEC */
 #ifdef ALLOW_DIAGNOSTICS
        IF ( useDiagnostics ) THEN
