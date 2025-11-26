@@ -58,7 +58,7 @@ C     == Local variables ==
       _RL heLocV      (1-OLx:sNx+OLx,1-OLy:sNy+OLy)
       _RL dzLoc
 #ifdef GM_BOLUS_ADVEC
-      _RL z2H, z_rel, le, Ccoef, n_val, mu_z
+      _RL z2H, heMin, z_rel, le, Ccoef, n_val, mu_z
 #endif
 C      _RL five_ov21
 C      PARAMETER( five_ov21 = 5. _d 0 / 21. _d 0 )
@@ -167,35 +167,36 @@ C     &                 *2. _d 0/(lengthScaleF(i-1,j)+lengthScaleF(i,j))
        DO k=2,Nr
         DO j=2-OLy,sNy+OLy-1
          DO i=3-OLx,sNx+OLx-1
-          
-          IF ( mixLayerU(i,j).GT.0. _d 0 ) THEN
+
+          IF ( mixLayerU(i,j) .GT. 0. _d 0 ) THEN
             z2H = 2. _d 0*rF(k)/mixLayerU(i,j)
           ELSE
             z2H = 0. _d 0
           ENDIF
-          
-          heLocU(i,j) = heSlope*mixLayerU(i,j) + heIntercept
-          heLocU(i,j) = MAX( heLocU(i,j), mixLayerU(i,j) )          
-          
-          le = heLocU(i,j) - mixLayerU(i,j)
-          IF ( le .LE. 0._d0 ) THEN
-           Ccoef = 0._d0
-           n_val = 0._d0
-          ELSE
-           Ccoef = EXP(1._d0)*meConst/le
-           n_val = Ccoef*mixLayerU(i,j)/4._d0 - 1._d0
-          END IF          
 
-    	  IF ( rF(k) .GE. -mixLayerU(i,j) ) THEN
-           mu_z = ( z2H + 1._d0 )*( z2H + 1._d0 )
-           mu_z = ( 1._d0 - mu_z )*( 1._d0 + mu_z*n_val )
-           mu_z = MAX( 0._d0, mu_z )
-    	  ELSE
+          heLocU(i,j) = heSlope*mixLayerU(i,j) + heIntercept
+          heMin = mixLayerU(i,j)*(1. _d 0 + EXP(1. _d 0)*meConst/4. _d 0)
+          heLocU(i,j) = MAX( heLocU(i,j), heMin )
+
+          le = heLocU(i,j) - mixLayerU(i,j)
+          IF ( le .LE. 0. _d 0 ) THEN
+           Ccoef = 0. _d 0
+           n_val = 0. _d 0
+          ELSE
+           Ccoef = EXP(1. _d 0)*meConst/le
+           n_val = Ccoef*mixLayerU(i,j)/4. _d 0 - 1. _d 0
+          END IF
+
+          IF ( rF(k) .GE. -mixLayerU(i,j) ) THEN
+           mu_z = ( z2H + 1. _d 0 )*( z2H + 1. _d 0 )
+           mu_z = ( 1. _d 0 - mu_z )*( 1. _d 0 + mu_z*n_val )
+           mu_z = MAX( 0. _d 0, mu_z )
+          ELSE
            z_rel = rF(k) + mixLayerU(i,j)
-	   mu_z = Ccoef*z_rel*EXP( z_rel/le )
-    	  ENDIF
-    
-	  GM_PsiX(i,j,k,bi,bj) = GM_PsiX(i,j,k,bi,bj)
+           mu_z = Ccoef*z_rel*EXP( z_rel/le )
+          ENDIF
+
+          GM_PsiX(i,j,k,bi,bj) = GM_PsiX(i,j,k,bi,bj)
      &                         + mu_z*PsiLoc(i,j)
          ENDDO
         ENDDO
@@ -229,30 +230,31 @@ C     &                 *2. _d 0/(lengthScaleF(i,j-1)+lengthScaleF(i,j))
 #ifdef GM_BOLUS_ADVEC
        DO k=2,Nr
         DO j=3-OLy,sNy+OLy-1
-         DO i=2-OLx,sNx+OLx-1        
+         DO i=2-OLx,sNx+OLx-1
 
-          IF ( mixLayerV(i,j).GT.0._d0 ) THEN
-            z2H = 2._d0*rF(k)/mixLayerV(i,j)
+          IF ( mixLayerV(i,j) .GT. 0. _d 0 ) THEN
+            z2H = 2. _d 0 * rF(k)/mixLayerV(i,j)
           ELSE
-            z2H = 0._d0
+            z2H = 0. _d 0
           ENDIF
 
           heLocV(i,j) = heSlope*mixLayerV(i,j) + heIntercept
-          heLocV(i,j) = MAX( heLocV(i,j), mixLayerV(i,j) )
+          heMin = mixLayerV(i,j)*(1. _d 0 + EXP(1. _d 0)*meConst/4. _d 0)
+          heLocV(i,j) = MAX( heLocV(i,j), heMin )
 
           le = heLocV(i,j) - mixLayerV(i,j)
-          IF ( le .LE. 0._d0 ) THEN
-           Ccoef = 0._d0
-           n_val = 0._d0
+          IF ( le .LE. 0. _d 0 ) THEN
+           Ccoef = 0. _d 0
+           n_val = 0. _d 0
           ELSE
-           Ccoef = EXP(1._d0)*meConst/le
-           n_val = Ccoef*mixLayerV(i,j)/4._d0 - 1._d0
+           Ccoef = EXP(1. _d 0) * meConst/le
+           n_val = Ccoef*mixLayerV(i,j)/4. _d 0 - 1. _d 0
           END IF
 
           IF ( rF(k) .GE. -mixLayerV(i,j) ) THEN
-           mu_z = ( z2H + 1._d0 )*( z2H + 1._d0 )
-           mu_z = ( 1._d0 - mu_z )*( 1._d0 + mu_z*n_val )
-           mu_z = MAX( 0._d0, mu_z )
+           mu_z = ( z2H + 1. _d 0 )*( z2H + 1. _d 0 )
+           mu_z = ( 1. _d 0 - mu_z )*( 1. _d 0 + mu_z*n_val )
+           mu_z = MAX( 0. _d 0, mu_z )
           ELSE
            z_rel = rF(k) + mixLayerV(i,j)
            mu_z = Ccoef*z_rel*EXP( z_rel/le )
@@ -263,7 +265,7 @@ C     &                 *2. _d 0/(lengthScaleF(i,j-1)+lengthScaleF(i,j))
 
          ENDDO
         ENDDO
-       ENDDO       
+       ENDDO
 #endif /* GM_BOLUS_ADVEC */
 #ifdef ALLOW_DIAGNOSTICS
        IF ( useDiagnostics ) THEN
