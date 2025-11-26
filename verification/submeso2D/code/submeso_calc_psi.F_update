@@ -57,8 +57,9 @@ C     == Local variables ==
       _RL heLocU      (1-OLx:sNx+OLx,1-OLy:sNy+OLy)
       _RL heLocV      (1-OLx:sNx+OLx,1-OLy:sNy+OLy)
       _RL dzLoc
+      _RL heMin
 #ifdef GM_BOLUS_ADVEC
-      _RL z2H, heMin, z_rel, le, Ccoef, n_val, mu_z
+      _RL z2H, z_rel, le, Ccoef, n_val, mu_z
 #endif
 C      _RL five_ov21
 C      PARAMETER( five_ov21 = 5. _d 0 / 21. _d 0 )
@@ -163,6 +164,22 @@ C     &                 *2. _d 0/(lengthScaleF(i-1,j)+lengthScaleF(i,j))
      &                 *2. _d 0/(fcorLoc(i-1,j)+fcorLoc(i,j))
         ENDDO
        ENDDO
+
+C      Compute entrainment depth
+       DO j=1-OLy,sNy+OLy
+        DO i=1-OLx+1,sNx+OLx
+          heLocU(i,j) = heSlope*mixLayerU(i,j) + heIntercept
+          heMin = mixLayerU(i,j)*(1. _d 0 + EXP(1. _d 0)*meConst/4. _d 0)
+          heLocU(i,j) = MAX( heLocU(i,j), heMin )         
+        ENDDO
+       ENDDO
+       DO j=1-OLy+1,sNy+OLy
+        DO i=1-OLx,sNx+OLx
+          heLocV(i,j) = heSlope*mixLayerV(i,j) + heIntercept
+          heMin = mixLayerV(i,j)*(1. _d 0 + EXP(1. _d 0)*meConst/4. _d 0)
+          heLocV(i,j) = MAX( heLocV(i,j), heMin )        
+        ENDDO
+       ENDDO
 #ifdef GM_BOLUS_ADVEC
        DO k=2,Nr
         DO j=2-OLy,sNy+OLy-1
@@ -173,10 +190,6 @@ C     &                 *2. _d 0/(lengthScaleF(i-1,j)+lengthScaleF(i,j))
           ELSE
             z2H = 0. _d 0
           ENDIF
-
-          heLocU(i,j) = heSlope*mixLayerU(i,j) + heIntercept
-          heMin = mixLayerU(i,j)*(1. _d 0 + EXP(1. _d 0)*meConst/4. _d 0)
-          heLocU(i,j) = MAX( heLocU(i,j), heMin )
 
           le = heLocU(i,j) - mixLayerU(i,j)
           IF ( le .LE. 0. _d 0 ) THEN
@@ -237,10 +250,6 @@ C     &                 *2. _d 0/(lengthScaleF(i,j-1)+lengthScaleF(i,j))
           ELSE
             z2H = 0. _d 0
           ENDIF
-
-          heLocV(i,j) = heSlope*mixLayerV(i,j) + heIntercept
-          heMin = mixLayerV(i,j)*(1. _d 0 + EXP(1. _d 0)*meConst/4. _d 0)
-          heLocV(i,j) = MAX( heLocV(i,j), heMin )
 
           le = heLocV(i,j) - mixLayerV(i,j)
           IF ( le .LE. 0. _d 0 ) THEN
