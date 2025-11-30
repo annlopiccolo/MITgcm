@@ -54,11 +54,13 @@ C     == Local variables ==
       _RL lengthScaleF(1-OLx:sNx+OLx,1-OLy:sNy+OLy)
       _RL fcorLoc     (1-OLx:sNx+OLx,1-OLy:sNy+OLy)
       _RL PsiLoc      (1-OLx:sNx+OLx,1-OLy:sNy+OLy)
+      _RL heLoc       (1-OLx:sNx+OLx,1-OLy:sNy+OLy)
       _RL heLocU      (1-OLx:sNx+OLx,1-OLy:sNy+OLy)
       _RL heLocV      (1-OLx:sNx+OLx,1-OLy:sNy+OLy)
+      _RL heMin
       _RL dzLoc
 #ifdef GM_BOLUS_ADVEC
-      _RL z2H, heMin, z_rel, le, Ccoef, n_val, mu_z
+      _RL z2H, z_rel, le, Ccoef, n_val, mu_z
 #endif
 C      _RL five_ov21
 C      PARAMETER( five_ov21 = 5. _d 0 / 21. _d 0 )
@@ -80,16 +82,29 @@ c     subMeso_Lmax   = 111. _d 3
 C-    Initialization : <= done in S/R gmredi_init
 
 c     IF ( GM_useSubMeso ) THEN
+
+C      Compute entrainment depth 
+       DO j = 1-OLy, sNy+OLy
+        DO i = 1-OLx, sNx+OLx
+         heLoc(i,j) = heSlope*locMixLayer(i,j) + heIntercept
+         heMin = locMixLayer(i,j)*(1.0 _d 0 + EXP(1.0 _d 0)*meConst/4.0 _d 0)
+         heLoc(i,j) = MAX(heLoc(i,j), heMin)
+        ENDDO
+       ENDDO
+
+C      Mixed-Layer depth and entrainment depth in X-Dir. and Y-Dir.
        DO j=1-OLy,sNy+OLy
         DO i=1-OLx+1,sNx+OLx
          mixLayerU(i,j) = op5*( locMixLayer(i-1,j)+locMixLayer(i,j) )
          mixLayerU(i,j) = MIN( mixLayerU(i,j), -rLowW(i,j,bi,bj) )
+         heLocU(i,j) = op5*( heLoc(i-1,j) + heLoc(i,j) )
         ENDDO
        ENDDO
        DO j=1-OLy+1,sNy+OLy
         DO i=1-OLx,sNx+OLx
-         mixLayerV(i,j)=op5*( locMixLayer(i,j-1)+locMixLayer(i,j) )
+         mixLayerV(i,j) = op5*( locMixLayer(i,j-1)+locMixLayer(i,j) )
          mixLayerV(i,j) = MIN( mixLayerV(i,j), -rLowS(i,j,bi,bj) )
+         heLocV(i,j) = op5*( heLoc(i,j-1) + heLoc(i,j) )
         ENDDO
        ENDDO
 
@@ -163,6 +178,7 @@ C     &                 *2. _d 0/(lengthScaleF(i-1,j)+lengthScaleF(i,j))
      &                 *2. _d 0/(fcorLoc(i-1,j)+fcorLoc(i,j))
         ENDDO
        ENDDO
+
 #ifdef GM_BOLUS_ADVEC
        DO k=2,Nr
         DO j=2-OLy,sNy+OLy-1
@@ -173,10 +189,6 @@ C     &                 *2. _d 0/(lengthScaleF(i-1,j)+lengthScaleF(i,j))
           ELSE
             z2H = 0. _d 0
           ENDIF
-
-          heLocU(i,j) = heSlope*mixLayerU(i,j) + heIntercept
-          heMin = mixLayerU(i,j)*(1. _d 0 + EXP(1. _d 0)*meConst/4. _d 0)
-          heLocU(i,j) = MAX( heLocU(i,j), heMin )
 
           le = heLocU(i,j) - mixLayerU(i,j)
           IF ( le .LE. 0. _d 0 ) THEN
@@ -206,12 +218,16 @@ C     &                 *2. _d 0/(lengthScaleF(i-1,j)+lengthScaleF(i,j))
        IF ( useDiagnostics ) THEN
          CALL DIAGNOSTICS_FILL( lengthScaleF, 'SubMesLf',
      &                           0, 1, 2, bi, bj, myThid )
+         CALL DIAGNOSTICS_FILL( heLoc, 'EntDepth',
+     &                           0, 1, 2, bi, bj, myThid )    
          CALL DIAGNOSTICS_FILL( PsiLoc, 'SubMpsiX',
-     &                          0, 1, 2, bi, bj, myThid )
+     &                           0, 1, 2, bi, bj, myThid )
        ENDIF
 #endif
        IF ( debugLevel.GE.debLevD ) THEN
          CALL WRITE_LOCAL_RL( 'subMeso_Lf','I10',1,lengthScaleF,
+     &                         bi,bj,1,myIter,myThid )
+         CALL WRITE_LOCAL_RL( 'he_EntDepth','I10',1,heLoc,
      &                         bi,bj,1,myIter,myThid )
          CALL WRITE_LOCAL_RL( 'subMeso_psiX','I10',1,PsiLoc,
      &                         bi,bj,1,myIter,myThid )
@@ -237,10 +253,6 @@ C     &                 *2. _d 0/(lengthScaleF(i,j-1)+lengthScaleF(i,j))
           ELSE
             z2H = 0. _d 0
           ENDIF
-
-          heLocV(i,j) = heSlope*mixLayerV(i,j) + heIntercept
-          heMin = mixLayerV(i,j)*(1. _d 0 + EXP(1. _d 0)*meConst/4. _d 0)
-          heLocV(i,j) = MAX( heLocV(i,j), heMin )
 
           le = heLocV(i,j) - mixLayerV(i,j)
           IF ( le .LE. 0. _d 0 ) THEN
