@@ -7,6 +7,7 @@ C     !INTERFACE:
      I             bi, bj, iMin, iMax, jMin, jMax,
      I             sigmaX, sigmaY, sigmaR,
      I             locMixLayer,
+     U             locK3dRedi,
      I             myIter, myThid )
 
 C     !DESCRIPTION: \bv
@@ -16,6 +17,8 @@ C     | o Calculate stream-functions for Sub-Meso bolus velocity
 C     *==========================================================*
 C     | Ref: B. Fox-Kemper etal, Oce.Model., 39:61-78, 2011
 C     |      B. Fox-Kemper etal, JPO, 38(6):1145-1165, 2008
+C     | Adapted by Anna Lo Piccolo, Nov 2025 to include EntDepth
+C     | for entrainment
 C     *==========================================================*
 C     \ev
 
@@ -31,10 +34,13 @@ C     == Global variables ==
 
 C     !INPUT/OUTPUT PARAMETERS:
 C     == Routine arguments ==
+C    locK3dRedi :: 3-d Isopycnal diffusivity [m^2/s],
+C                  to add Sub-Meso contribution to it
       _RL sigmaX(1-OLx:sNx+OLx,1-OLy:sNy+OLy,Nr)
       _RL sigmaY(1-OLx:sNx+OLx,1-OLy:sNy+OLy,Nr)
       _RL sigmaR(1-OLx:sNx+OLx,1-OLy:sNy+OLy,Nr)
       _RL locMixLayer(1-OLx:sNx+OLx,1-OLy:sNy+OLy)
+      _RL locK3dRedi(1-OLx:sNx+OLx,1-OLy:sNy+OLy,Nr)
       INTEGER bi,bj,iMin,iMax,jMin,jMax
       INTEGER myIter
       INTEGER myThid
@@ -68,7 +74,7 @@ C      PARAMETER( five_ov21 = 5. _d 0 / 21. _d 0 )
       _RL heSlope, heIntercept
       PARAMETER( meConst = 0.12d0 )
       PARAMETER( heSlope = 1.7d0 )
-      PARAMETER( heIntercept = -79.2d0 ) 
+      PARAMETER( heIntercept = -79.2d0 )
 
 C--   parameter to move to GMREDI.h
 c     _RL subMeso_invTau, subMeso_LfMin, subMeso_Ceff
@@ -83,7 +89,7 @@ C-    Initialization : <= done in S/R gmredi_init
 
 c     IF ( GM_useSubMeso ) THEN
 
-C      Compute entrainment depth 
+C      Compute entrainment depth
        DO j = 1-OLy, sNy+OLy
         DO i = 1-OLx, sNx+OLx
          heLoc(i,j) = heSlope*locMixLayer(i,j) + heIntercept
@@ -203,6 +209,8 @@ C     &                 *2. _d 0/(lengthScaleF(i-1,j)+lengthScaleF(i,j))
            mu_z = ( z2H + 1. _d 0 )*( z2H + 1. _d 0 )
            mu_z = ( 1. _d 0 - mu_z )*( 1. _d 0 + mu_z*n_val )
            mu_z = MAX( 0. _d 0, mu_z )
+          ELSEIF ( le .LE. 0. _d 0 ) THEN
+           mu_z = 0. _d 0
           ELSE
            z_rel = rF(k) + mixLayerU(i,j)
            mu_z = Ccoef*z_rel*EXP( z_rel/le )
@@ -219,7 +227,7 @@ C     &                 *2. _d 0/(lengthScaleF(i-1,j)+lengthScaleF(i,j))
          CALL DIAGNOSTICS_FILL( lengthScaleF, 'SubMesLf',
      &                           0, 1, 2, bi, bj, myThid )
          CALL DIAGNOSTICS_FILL( heLoc, 'EntDepth',
-     &                           0, 1, 2, bi, bj, myThid )    
+     &                           0, 1, 2, bi, bj, myThid )
          CALL DIAGNOSTICS_FILL( PsiLoc, 'SubMpsiX',
      &                           0, 1, 2, bi, bj, myThid )
        ENDIF
@@ -267,6 +275,8 @@ C     &                 *2. _d 0/(lengthScaleF(i,j-1)+lengthScaleF(i,j))
            mu_z = ( z2H + 1. _d 0 )*( z2H + 1. _d 0 )
            mu_z = ( 1. _d 0 - mu_z )*( 1. _d 0 + mu_z*n_val )
            mu_z = MAX( 0. _d 0, mu_z )
+          ELSEIF ( le .LE. 0. _d 0 ) THEN
+           mu_z = 0. _d 0
           ELSE
            z_rel = rF(k) + mixLayerV(i,j)
            mu_z = Ccoef*z_rel*EXP( z_rel/le )
